@@ -1,0 +1,119 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+|       o          |                                                          |
+|    o     o       | HELYX-OS                                                  |
+|   o   O   o      | Version: v2.2.0                                           |
+|    o     o       | Web:     http://www.engys.com                            |
+|       o          |                                                          |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version 2.0;
+    format ascii;
+    class dictionary;
+    location system;
+    object blockMeshDict;
+}
+
+    convertToMeters 1;
+
+// 	=========================================================================
+// 	Input for the geometry
+// 	=========================================================================
+
+// 	Coordinates
+	x1	6;	
+	x2      7.5;
+	x3	21;	
+	y1 	0.0;
+	y2 	0.6;
+	z1  	-0.55;
+	z2   	0.35;
+	z3	0.75;
+
+
+// Cell size
+	dx   0.050;	
+	dz   0.025;
+
+//	Cell division
+	nx1   #calc "($x2 - $x1) / $dx + 3";
+	nx2   #calc "($x3 - $x2) / $dx + 3";
+	ny   1;
+	nz    #calc "($z2 - $z1) / $dz";
+
+    vertices  
+    (
+      ( $x1 $y1 $z1) //0
+      ( $x2 $y1 $z1) //1
+      ( $x3 $y1 $z2) //2
+      ( $x3 $y1 $z3) //3
+      ( $x2 $y1 $z3) //4
+      ( $x1 $y1 $z3) //5
+      ( $x1 $y2 $z1) //6
+      ( $x2 $y2 $z1) //7
+      ( $x3 $y2 $z2) //8
+      ( $x3 $y2 $z3) //9
+      ( $x2 $y2 $z3) //10
+      ( $x1 $y2 $z3) //11
+    );
+    blocks 
+    ( 
+	hex (0 1 7 6 5 4 10 11) ($nx1 $ny $nz) simpleGrading ( 1 1 1)
+	hex (1 2 8 7 4 3 9 10) ($nx2 $ny $nz) simpleGrading ( 1 1 1)
+    );
+    edges 
+    (
+    );
+	boundary 
+	(
+		inlet
+		{
+			type 	patch;
+			faces	(( 0 5 11 6));
+		}
+		outlet
+		{
+			type 	patch;
+			faces	(( 2 8 9 3));
+		}
+		front
+		{
+			type 	empty;
+			faces	
+			(
+				( 0 1 4 5)
+				( 1 2 3 4)
+			);
+		}
+		back
+		{
+			type 	empty;
+			faces	
+			(
+				( 6 11 10 7)
+				( 10 9 8 7)
+			);
+		}
+		bottom
+		{
+			type 	wall;
+			faces	(( 0 6 7 1));		
+		}
+		slope
+		{
+			type	wall;
+			faces	(( 1 7 8 2));
+		}
+		atmosphere
+		{
+			type 	patch;
+			faces	
+			(
+				( 4 10 11 5)
+				( 3 9 10 4)
+			);
+		}
+	);
+    mergePatchPairs  
+    (
+    );

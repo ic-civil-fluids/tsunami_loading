@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# ===============================
+# USER INPUT
+# ===============================
+
+# Start time
+t=131
+
+# Number of nodes
+node=1
+
+#Number of processor to use
+core=6
+
+#Total number of processor
+proc=$(( node * core ))
+
+# ===============================
+# REPLACE
+# ===============================
+echo "Replacing zero time folder ..."
+rm -rf ./$t
+cp -rf ./131.org ./$t
+
+# ===============================
+# BLOCKMESH
+# ===============================
+echo "Generate blockMesh"
+blockMesh -dict ./system/blockMeshDict > log/log.blockMesh
+
+# ===============================
+# Refine mesh
+# ===============================
+
+#	1st refinement
+sed -i "s/.*\bbox\b.*/            box (8 -99 -0.05) (99 99 0.20);/g" system/topoSetDict
+sed -i "s/.*directions.*/directions      (tan1 tan2);/g" system/refineMeshDict
+topoSet -dict system/topoSetDict > log/log.topoSetDict
+refineMesh -overwrite -dict system/refineMeshDict > log/log.refineMeshDict
+
+#	2nd refinement
+sed -i "s/.*\bbox\b.*/            box (10 -99 -0.025) (99 99 0.175);/g" system/topoSetDict
+sed -i "s/.*directions.*/directions      (tan1 tan2);/g" system/refineMeshDict
+topoSet -dict system/topoSetDict > log/log.topoSetDict
+refineMesh -overwrite -dict system/refineMeshDict > log/log.refineMeshDict
+
+#	3rd refinement
+sed -i "s/.*\bbox\b.*/            box (14 -99 -0.0666) (21 99  0.3);/g" system/topoSetDict
+sed -i "s/.*directions.*/directions      (tan1 tan2);/g" system/refineMeshDict
+topoSet -dict system/topoSetDict > log/log.topoSetDict
+refineMesh -overwrite -dict system/refineMeshDict > log/log.refineMeshDict
+
+# ===============================
+# CHECKMESH
+# ===============================
+echo "Checking mesh ..."
+checkMesh > log/log.checkMesh
+
+# ===============================
+# SET WAVE FIELD
+# ===============================
+echo "Setting wave field ..."
+setWaveField > log/log.setWaveField
+
+# ===============================
+# DECOMPOSE DOMAIN
+# ===============================
+echo "Decompose domain ..."	
+
+#Change decomposeParDict entry
+sed -i "s/^.*\bnumberOfSubdomains\b.*$/numberOfSubdomains $proc;/g" system/decomposeParDict
+sed -i "s/^.*\bn\b.*$/    n ($proc 1 1);/g" system/decomposeParDict
+
+#Decompose
+decomposePar -force >  log/log.decomposePar 2>&1
+
+# ===============================
+# WAVEFOAM
+# ===============================
+echo "Run waveFoam ..."
+mpirun -np $proc waveFoam -parallel | tee log/log.waveFoam 2>&1
+
+# ===============================
+# RECONSTRUCT
+# ===============================
+echo "Reconstruct ..."
+# RECONSTRUCT
+reconstructPar > log/log.reconstructPar 2>&1
+ret=$?
+
+# DELETE PROCESSOR
+if [ $ret -eq 0 ] ; then
+	  for i in processor* ; do rm -rf $i & done
+	  wait 
+fi
