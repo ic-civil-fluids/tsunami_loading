@@ -1,0 +1,117 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.5                                   |
+|   \\  /    A nd           | Web:      http://www.OpenFOAM.org               |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      fvSolution;
+}
+
+solvers
+{
+
+//	Initial pressure correction
+    "pcorr.*"
+    {
+		solver 			PCG;
+        preconditioner  DIC;
+        tolerance       1e-9;
+        relTol          0;
+    };
+
+//	Pressure correction
+    p_rgh 
+    {
+		solver 			PCG;
+        preconditioner  DIC;
+        tolerance       1e-7;
+        relTol          0;
+    };
+
+//	Final pressure correction
+    p_rghFinal
+    {
+		solver 			PCG;
+        preconditioner  DIC;
+        tolerance       1e-8;
+        relTol          0;
+    };
+
+//	Initial U
+    U 
+    {
+		solver 			 PBiCCCG;
+		type 			 coupled;
+        preconditioner   DILU;
+        tolerance        (1e-07 1e00 1e-07);
+        relTol           (0 0 0);
+    };
+
+//	Final U
+    UFinal
+    {
+		solver 			 PBiCCCG;
+		type 			 coupled;
+        preconditioner   DILU;
+        tolerance        (1e-07 1e00 1e-07);
+        relTol           (0 0 0);
+    };
+
+//	Alpha.water
+    "alpha.water.*" PBiCG
+    {
+	nAlphaCorr      1;
+        nAlphaSubCycles 5;
+        cAlpha          1;
+
+        preconditioner   DILU;
+        tolerance        1e-07; //changed from 1e-08
+        relTol           0;
+    };
+
+}
+
+
+PIMPLE 
+{ 
+
+//	Pressure reference value
+    pdRefCell 0;
+    pdRefValue 0;
+
+//	Momentum predictor
+    momentumPredictor yes;
+
+//	Pimple outer & innner iterations
+    nOuterCorrectors 50; 
+    nCorrectors     1;
+
+//	Non orthogonal corrector
+    nNonOrthogonalCorrectors 1;
+
+//	Alpha corrector
+    nAlphaCorr      1;
+    nAlphaSubCycles 5;
+    cAlpha          1;
+
+//	Residual control
+    residualControl
+    {
+        U
+        {
+            tolerance 1e00;
+            relTol 0;
+        }
+        p_rgh
+        {
+            tolerance 1e-6;
+            relTol 0;
+        }
+    }
+}
