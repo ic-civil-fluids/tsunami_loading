@@ -1,6 +1,6 @@
 # OpenFOAM Simulations of Tsunami Waves
 
-This folder contains all input files necessary to reproduce the OpenFOAM Simulation of Error Function (ERF) wave case B2.
+This folder contains all input files necessary to reproduce the OpenFOAM Simulations of Error Function (ERF) wave cases B1, B2 and B3.
 
 Public use for the readership of Ocean Engineering.
 
